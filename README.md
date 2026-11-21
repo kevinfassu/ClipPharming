@@ -22,7 +22,7 @@ VOD URL / file
 ## Setup (Windows 11)
 
 1. Install [Git](https://git-scm.com/download/win), clone this repo, open PowerShell in the folder.
-2. Run the installer (installs Python 3.12 + FFmpeg with winget if missing, then the Python packages and the
+2. Run the installer (installs Python 3.12, FFmpeg and Deno with winget if missing, then the Python packages and the
    Whisper model):
 
 ```powershell
@@ -54,6 +54,13 @@ Start with a 20-30 minute video before a 10-hour stream. The quickest test is yo
 ```
 
 Clips land in `storage\clips\source_<id>\clip01_*.mp4` and in the dashboard's Review tab.
+
+Just want to see how ClipForge handles a video you don't have rights to, without ever posting it? Use `--test`
+instead of `--own`. The clips get a burned-in "PRIVATE TEST - DO NOT POST" label and can't be approved or exported:
+
+```powershell
+.\.venv\Scripts\python.exe -m clipforge process "https://www.youtube.com/watch?v=..." --test --niche podcast
+```
 
 ## Daily workflow
 

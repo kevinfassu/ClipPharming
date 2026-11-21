@@ -120,3 +120,49 @@ def test_claude_handoff_roundtrip(cfg, conn, vod):
     assert top["title"] == "Best one" and top["llm_score"] == 0.9
     if len(cands) > 1:
         assert db.one(conn, "SELECT status FROM candidates WHERE id=?", cands[-1]["id"])["status"] == "rejected"
+
+
+def test_missing_local_file_gives_clear_error(cfg, conn):
+    from clipforge.pipeline.download import looks_like_path
+
+    assert looks_like_path(r"C:\Users\YOU\Videos\test.mp4")
+    assert looks_like_path("/home/me/v.mp4") and looks_like_path("file:///tmp/v.mp4")
+    assert not looks_like_path("https://www.twitch.tv/videos/123")
+    with pytest.raises(ValueError, match="Video file not found"):
+        services.submit_source(conn, cfg, r"C:\Users\YOU\Videos\test.mp4", own_content=True)
+    assert db.one(conn, "SELECT COUNT(*) n FROM sources")["n"] == 0
+
+
+def test_quoted_local_path_accepted(cfg, conn, vod):
+    sid = services.submit_source(conn, cfg, f'"{vod}"', own_content=True)
+    assert db.one(conn, "SELECT url FROM sources WHERE id=?", sid)["url"] == str(vod)
+
+
+def test_private_test_mode_cannot_be_posted(cfg, conn, vod):
+    sid = services.submit_source(conn, cfg, str(vod), test_only=True, niche="gaming")
+    write_transcript(cfg, sid)
+    drain(conn, cfg)
+    clips = db.all_(conn, "SELECT * FROM candidates WHERE source_id=?", sid)
+    assert clips and all(c["status"] == "rendered" for c in clips)
+    ass = Path(clips[0]["clip_path"]).with_suffix(".ass").read_text()
+    assert "PRIVATE TEST - DO NOT POST" in ass
+    acc = services.add_account(conn, name="A", platform="youtube", niche="gaming")
+    with pytest.raises(ValueError, match="TEST"):
+        services.approve(conn, clips[0]["id"], account_ids=[acc], scheduled_at=None)
+    # even a hand-made queue row can't be exported
+    pid = db.insert(conn, "publish_queue", candidate_id=clips[0]["id"], account_id=acc, status="pending",
+                    created_at=db.now())
+    with pytest.raises(ValueError, match="TEST"):
+        services.export_publish(conn, cfg, pid)
+
+
+def test_migration_adds_test_only_column(tmp_path):
+    import sqlite3
+
+    old = sqlite3.connect(tmp_path / "old.db", isolation_level=None)
+    old.row_factory = sqlite3.Row
+    v1_schema = "\n".join(l for l in db.SCHEMA.splitlines() if "test_only" not in l)
+    old.executescript(v1_schema)   # database as created by v0.1.0
+    assert "test_only" not in {r["name"] for r in old.execute("PRAGMA table_info(sources)")}
+    db.init_db(old)
+    assert "test_only" in {r["name"] for r in old.execute("PRAGMA table_info(sources)")}

@@ -173,6 +173,8 @@ def render_candidate(conn: sqlite3.Connection, cfg: Config, candidate_id: int) -
     clip_path = out_dir / f"{stem}.mp4"
     ass_path = out_dir / f"{stem}.ass"
     credit = f"Credit: {creator['name']}" if creator else ""
+    if src["test_only"]:
+        credit = "PRIVATE TEST - DO NOT POST"
     captions.write_ass(ass_path, words, cand["start"], cand["end"], profile["caption_style"],
                        width=int(cfg["render"]["width"]), height=int(cfg["render"]["height"]),
                        hook=cand["hook"] or "", credit=credit)
@@ -253,7 +255,8 @@ def run_job(conn: sqlite3.Connection, cfg: Config, job: sqlite3.Row) -> None:
 
 def _fail(conn: sqlite3.Connection, cfg: Config, job: sqlite3.Row, exc: BaseException) -> None:
     msg = f"{type(exc).__name__}: {exc}"
-    retry = job["attempts"] < int(cfg["worker"]["max_attempts"]) and not isinstance(exc, services.PermissionDenied)
+    retry = job["attempts"] < int(cfg["worker"]["max_attempts"]) and not isinstance(
+        exc, (services.PermissionDenied, FileNotFoundError))
     with db.tx(conn):
         db.update(conn, "jobs", job["id"], status="queued" if retry else "failed", error=msg,
                   finished_at=None if retry else db.now())
