@@ -17,6 +17,11 @@ if (Need "ffmpeg") {
     winget install -e --id Gyan.FFmpeg --accept-source-agreements --accept-package-agreements
     $reopen = $true
 }
+if (Need "deno") {
+    Write-Host "Installing Deno (yt-dlp needs a JavaScript runtime for YouTube)..." -ForegroundColor Cyan
+    winget install -e --id DenoLand.Deno --accept-source-agreements --accept-package-agreements
+    $reopen = $true
+}
 if ($reopen) {
     Write-Host "Installed new tools. Close this window, open a NEW PowerShell, and run this script again." -ForegroundColor Yellow
     exit 0

@@ -22,7 +22,7 @@ VOD URL / file
 ## Setup (Windows 11)
 
 1. Install [Git](https://git-scm.com/download/win), clone this repo, open PowerShell in the folder.
-2. Run the installer (installs Python 3.12 + FFmpeg with winget if missing, then the Python packages and the
+2. Run the installer (installs Python 3.12, FFmpeg and Deno with winget if missing, then the Python packages and the
    Whisper model):
 
 ```powershell

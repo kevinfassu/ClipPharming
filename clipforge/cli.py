@@ -41,6 +41,8 @@ def cmd_check(args) -> int:
     print("ClipForge environment check")
     line("ffmpeg", shutil.which("ffmpeg"), shutil.which("ffmpeg") or "install: winget install Gyan.FFmpeg")
     line("ffprobe", shutil.which("ffprobe"))
+    line("deno (YouTube downloads)", shutil.which("deno"),
+         "" if shutil.which("deno") else "install: winget install -e --id DenoLand.Deno")
     try:
         from clipforge.pipeline.ffmpeg import encoder_works, pick_encoder
         enc = pick_encoder(cfg["render"]["encoder"])
