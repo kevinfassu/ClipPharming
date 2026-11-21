@@ -2,7 +2,7 @@
 {% for s in sources %}<tr>
 <td>{{ s.id }}</td>
 <td><div>{{ s.title or s.url }}</div><div class="small muted">{{ s.url[:90] }}</div></td>
-<td>{{ s.creator or ('Own content' if s.own_content else '') }}</td>
+<td>{{ s.creator or ('Own content' if s.own_content else '') }}{% if s.test_only %} <span class="pill failed">TEST</span>{% endif %}</td>
 <td>{{ s.niche }}</td><td>{{ s.duration|hms }}</td>
 <td><span class="pill {{ s.status }}">{{ s.status }}</span> <span class="small muted">{{ s.stage or '' }}</span>
 {% if s.status == 'processing' and s.progress is not none %}<div class="progress"><i style="width:{{ (s.progress*100)|round }}%"></i></div>{% endif %}

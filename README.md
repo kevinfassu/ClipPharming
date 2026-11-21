@@ -55,6 +55,13 @@ Start with a 20-30 minute video before a 10-hour stream. The quickest test is yo
 
 Clips land in `storage\clips\source_<id>\clip01_*.mp4` and in the dashboard's Review tab.
 
+Just want to see how ClipForge handles a video you don't have rights to, without ever posting it? Use `--test`
+instead of `--own`. The clips get a burned-in "PRIVATE TEST - DO NOT POST" label and can't be approved or exported:
+
+```powershell
+.\.venv\Scripts\python.exe -m clipforge process "https://www.youtube.com/watch?v=..." --test --niche podcast
+```
+
 ## Daily workflow
 
 1. **Creators and permissions**: add each creator, who gave permission, and a link to the evidence (DM, email,

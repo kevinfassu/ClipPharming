@@ -54,7 +54,7 @@ def active_permission(conn: sqlite3.Connection, creator_id: int | None) -> sqlit
 
 
 def check_source_allowed(conn: sqlite3.Connection, source: sqlite3.Row) -> None:
-    if source["own_content"]:
+    if source["own_content"] or source["test_only"]:
         return
     if not active_permission(conn, source["creator_id"]):
         raise PermissionDenied(
@@ -71,7 +71,8 @@ def add_account(conn: sqlite3.Connection, *, name: str, platform: str, niche: st
 
 # ---------------------------------------------------------------- sources
 def submit_source(conn: sqlite3.Connection, cfg: Config, url: str, *, creator_id: int | None = None,
-                  own_content: bool = False, niche: str | None = None, priority: int = 0,
+                  own_content: bool = False, test_only: bool = False, niche: str | None = None,
+                  priority: int = 0,
                   title: str | None = None, external_id: str | None = None) -> int:
     url = url.strip().strip('"').strip("'")
     if not url:
@@ -87,14 +88,15 @@ def submit_source(conn: sqlite3.Connection, cfg: Config, url: str, *, creator_id
     creator = db.one(conn, "SELECT * FROM creators WHERE id = ?", creator_id) if creator_id else None
     if creator_id and not creator:
         raise ValueError(f"Creator {creator_id} not found")
-    if not own_content and not active_permission(conn, creator_id):
+    if not own_content and not test_only and not active_permission(conn, creator_id):
         raise PermissionDenied("This creator has no active permission on file - add it first, "
                                "or tick 'my own content'.")
     niche = niche or (creator["niche"] if creator else None) or next(iter(cfg.niches))
     if niche not in cfg.niches:
         raise ValueError(f"Unknown niche '{niche}'. Configured: {', '.join(cfg.niches)}")
     with db.tx(conn):
-        sid = db.insert(conn, "sources", creator_id=creator_id, own_content=int(bool(own_content)), url=url,
+        sid = db.insert(conn, "sources", creator_id=creator_id, own_content=int(bool(own_content)),
+                        test_only=int(bool(test_only)), url=url,
                         niche=niche, title=title, external_id=external_id, status="queued",
                         created_at=db.now(), updated_at=db.now())
         db.enqueue(conn, "ingest", source_id=sid, priority=priority)
@@ -113,6 +115,8 @@ def approve(conn: sqlite3.Connection, candidate_id: int, *, account_ids: list[in
     cand = db.one(conn, "SELECT * FROM candidates WHERE id = ?", candidate_id)
     if not cand or not cand["clip_path"]:
         raise ValueError("Clip not rendered yet")
+    if db.one(conn, "SELECT test_only FROM sources WHERE id = ?", cand["source_id"])["test_only"]:
+        raise ValueError("This clip is from a private TEST source and can't be approved for posting.")
     ids = []
     with db.tx(conn):
         db.update(conn, "candidates", candidate_id, status="approved", reviewed_at=db.now(),
@@ -167,6 +171,9 @@ def export_publish(conn: sqlite3.Connection, cfg: Config, publish_id: int) -> Pa
                           LEFT JOIN creators cr ON cr.id = s.creator_id WHERE p.id = ?""", publish_id)
     if not row:
         raise ValueError("Publish item not found")
+    if db.one(conn, """SELECT s.test_only FROM publish_queue p JOIN candidates c ON c.id = p.candidate_id
+                       JOIN sources s ON s.id = c.source_id WHERE p.id = ?""", publish_id)["test_only"]:
+        raise ValueError("Clips from a private TEST source can't be exported for posting.")
     folder = cfg.dir("outbox") / _slug(f"{row['account_name']}-{row['platform']}")
     folder.mkdir(parents=True, exist_ok=True)
     when = (row["scheduled_at"] or db.now())[:16].replace(":", "").replace("T", "_")

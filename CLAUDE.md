@@ -14,6 +14,8 @@ Private, local-first AI clipping studio. Runs on one always-on Windows 11 laptop
 
 ## Rules
 - Never process a source without `own_content` or an active creator permission (`services.check_source_allowed`).
+  The only exception is `test_only` (private test): those clips get a burned-in "PRIVATE TEST - DO NOT POST"
+  label and `approve`/`export_publish` refuse them. Never remove those guards.
 - One heavy job at a time - 16 GB RAM. Don't add parallel transcription/rendering.
 - Keep the pipeline free of paid APIs; Ollama/Claude review are optional add-ons.
 - ffmpeg on Windows: subtitle files are passed by bare filename with `cwd` = clip folder (drive-letter colons break libass).

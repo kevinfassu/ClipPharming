@@ -88,7 +88,7 @@ def cmd_worker(args) -> int:
 def cmd_submit(args) -> int:
     cfg, conn = _ctx(args)
     sid = services.submit_source(conn, cfg, args.url, creator_id=args.creator, own_content=args.own,
-                                 niche=args.niche)
+                                 test_only=args.test, niche=args.niche)
     print(f"Queued source #{sid}. Run the worker to process it.")
     return 0
 
@@ -99,7 +99,9 @@ def cmd_process(args) -> int:
 
     cfg, conn = _ctx(args)
     sid = services.submit_source(conn, cfg, args.url, creator_id=args.creator, own_content=args.own,
-                                 niche=args.niche, priority=10)
+                                 test_only=args.test, niche=args.niche, priority=10)
+    if args.test:
+        print("TEST MODE: clips are labelled 'PRIVATE TEST - DO NOT POST' and can't be approved or exported.")
     worker.setup_logging(cfg)
     while True:
         job = db.claim_job(conn)
@@ -209,6 +211,8 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("url")
         p.add_argument("--creator", type=int, help="creator id (must have permission on file)")
         p.add_argument("--own", action="store_true", help="this is your own content")
+        p.add_argument("--test", action="store_true",
+                       help="private test of someone else's video: clips are labelled and can't be posted")
         p.add_argument("--niche")
         p.set_defaults(fn=fn)
 

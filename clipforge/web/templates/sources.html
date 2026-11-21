@@ -11,7 +11,8 @@
       </select></div>
     <div><label>Niche</label><select name="niche"><option value="">creator default</option>
       {% for k, n in niches.items() %}<option value="{{ k }}">{{ n.name }}</option>{% endfor %}</select></div>
-    <div style="flex:0 0 auto"><label><input type="checkbox" name="own_content" value="1"> My own content</label></div>
+    <div style="flex:0 0 auto"><label><input type="checkbox" name="own_content" value="1"> My own content</label>
+      <label><input type="checkbox" name="test_only" value="1"> Private test (can't be posted)</label></div>
     <div style="flex:0 0 auto"><button class="primary">Queue</button></div>
   </div>
   <p class="small muted">Only creators with an active permission record can be selected. Long VODs (10h+) are fine - they're processed one at a time.</p>

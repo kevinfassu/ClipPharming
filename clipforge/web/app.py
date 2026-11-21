@@ -114,10 +114,11 @@ def create_app(cfg: Config | None = None) -> FastAPI:
 
     @app.post("/sources")
     def sources_add(url: str = Form(...), creator_id: str = Form(""), own_content: str = Form(""),
-                    niche: str = Form("")):
+                    test_only: str = Form(""), niche: str = Form("")):
         try:
             sid = services.submit_source(conn, cfg, url, creator_id=int(creator_id) if creator_id else None,
-                                         own_content=bool(own_content), niche=niche or None)
+                                         own_content=bool(own_content), test_only=bool(test_only),
+                                         niche=niche or None)
         except (services.PermissionDenied, ValueError) as exc:
             return back("/sources", err=str(exc))
         return back("/sources", msg=f"Source #{sid} queued")
@@ -197,7 +198,7 @@ def create_app(cfg: Config | None = None) -> FastAPI:
         if source:
             where.append("s.id = ?")
             args.append(int(source))
-        clips = db.all_(conn, f"""SELECT c.*, s.niche, s.title AS source_title, s.url AS source_url,
+        clips = db.all_(conn, f"""SELECT c.*, s.niche, s.title AS source_title, s.url AS source_url, s.test_only,
                                   cr.name AS creator FROM candidates c JOIN sources s ON s.id = c.source_id
                                   LEFT JOIN creators cr ON cr.id = s.creator_id WHERE {' AND '.join(where)}
                                   ORDER BY c.score DESC LIMIT 60""", *args)

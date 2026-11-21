@@ -173,6 +173,8 @@ def render_candidate(conn: sqlite3.Connection, cfg: Config, candidate_id: int) -
     clip_path = out_dir / f"{stem}.mp4"
     ass_path = out_dir / f"{stem}.ass"
     credit = f"Credit: {creator['name']}" if creator else ""
+    if src["test_only"]:
+        credit = "PRIVATE TEST - DO NOT POST"
     captions.write_ass(ass_path, words, cand["start"], cand["end"], profile["caption_style"],
                        width=int(cfg["render"]["width"]), height=int(cfg["render"]["height"]),
                        hook=cand["hook"] or "", credit=credit)

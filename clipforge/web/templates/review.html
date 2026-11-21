@@ -29,7 +29,9 @@
       <div><label>End (s)</label><input name="end" type="number" step="0.1" value="{{ c.end }}"></div>
       <div style="flex:0 0 auto"><button>Save</button></div></div>
     </form></details>
-    {% if c.status == 'rendered' %}
+    {% if c.test_only %}
+    <div class="small err"><b>Private test source</b> &ndash; this clip can't be approved or exported.</div>
+    {% elif c.status == 'rendered' %}
     <form method="post" action="/clips/{{ c.id }}/approve">
       <label>Post to</label><div class="accounts">
       {% for a in accounts %}<label><input type="checkbox" name="account_ids" value="{{ a.id }}" {% if a.niche == c.niche %}checked{% endif %}>{{ a.name }} <span class="muted">{{ a.platform }}</span></label>

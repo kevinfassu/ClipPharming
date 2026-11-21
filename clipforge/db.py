@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS sources (
     id INTEGER PRIMARY KEY,
     creator_id INTEGER REFERENCES creators(id),
     own_content INTEGER NOT NULL DEFAULT 0,
+    test_only INTEGER NOT NULL DEFAULT 0,  -- private test: clips can't be approved/exported
     url TEXT NOT NULL,
     external_id TEXT,
     title TEXT,
@@ -159,8 +160,17 @@ def connect(cfg: Config) -> sqlite3.Connection:
     return conn
 
 
+MIGRATIONS = [
+    ("sources", "test_only", "INTEGER NOT NULL DEFAULT 0"),
+]
+
+
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    for table, column, decl in MIGRATIONS:  # add columns to databases created by older versions
+        cols = {r["name"] for r in conn.execute(f"PRAGMA table_info({table})")}
+        if column not in cols:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
 
 
 @contextmanager
