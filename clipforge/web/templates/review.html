@@ -1,0 +1,52 @@
+{% extends "base.html" %}{% block content %}
+<h1>Review clips</h1>
+<div class="filters">
+  {% for s in ['rendered','approved','rejected','rendering','failed'] %}
+  <a href="/review?status={{ s }}{% if niche %}&niche={{ niche }}{% endif %}{% if source %}&source={{ source }}{% endif %}" class="{{ 'on' if status == s }}">{{ 'to review' if s == 'rendered' else s }}</a>{% endfor %}
+  <span class="muted" style="padding:5px">|</span>
+  <a href="/review?status={{ status }}" class="{{ 'on' if not niche }}">all niches</a>
+  {% for k, n in niches.items() %}<a href="/review?status={{ status }}&niche={{ k }}" class="{{ 'on' if niche == k }}">{{ n.name }}</a>{% endfor %}
+</div>
+<div class="clips">
+{% for c in clips %}{% set f = c.features|fromjson %}
+<div class="clip">
+  {% if c.clip_path %}<video src="{{ c.clip_path|media }}" poster="{{ c.thumb_path|media }}" controls preload="none"></video>{% endif %}
+  <div class="body">
+    <div class="row" style="align-items:center"><div class="score">{{ c.score|round|int }}</div>
+      <div class="small muted" style="flex:3">#{{ c.rank }} &middot; {{ c.creator or 'own' }} &middot; {{ c.niche }} &middot; {{ c.start|hms }}&ndash;{{ c.end|hms }} ({{ (c.end - c.start)|round|int }}s)</div></div>
+    <div class="bars">{% for k in ['audio','keywords','laughter','speech_rate','hook','complete'] %}{% if k in f %}
+      <span>{{ k }}</span><div class="bar"><i style="width:{{ (f[k]*100)|round }}%"></i></div>{% endif %}{% endfor %}
+      {% if c.llm_score is not none %}<span>AI review</span><div class="bar"><i style="width:{{ (c.llm_score*100)|round }}%;background:var(--blue)"></i></div>{% endif %}
+    </div>
+    {% if c.llm_reason %}<div class="small muted">{{ c.llm_reason }}</div>{% endif %}
+    {% if c.review_notes %}<div class="small err">{{ c.review_notes }}</div>{% endif %}
+    <details><summary>Transcript</summary><div class="transcript">{{ c.transcript or '(no speech)' }}</div></details>
+    <details {% if status == 'rendered' %}open{% endif %}><summary>Edit title / hook / timing</summary>
+    <form method="post" action="/clips/{{ c.id }}/edit">
+      <label>Title</label><input name="title" value="{{ c.title or '' }}" style="width:100%">
+      <label>On-screen hook (changing it re-renders)</label><input name="hook" value="{{ c.hook or '' }}" style="width:100%">
+      <div class="row"><div><label>Start (s)</label><input name="start" type="number" step="0.1" value="{{ c.start }}"></div>
+      <div><label>End (s)</label><input name="end" type="number" step="0.1" value="{{ c.end }}"></div>
+      <div style="flex:0 0 auto"><button>Save</button></div></div>
+    </form></details>
+    {% if c.status == 'rendered' %}
+    <form method="post" action="/clips/{{ c.id }}/approve">
+      <label>Post to</label><div class="accounts">
+      {% for a in accounts %}<label><input type="checkbox" name="account_ids" value="{{ a.id }}" {% if a.niche == c.niche %}checked{% endif %}>{{ a.name }} <span class="muted">{{ a.platform }}</span></label>
+      {% else %}<span class="small muted">Add accounts first (My accounts).</span>{% endfor %}</div>
+      <label>Caption</label><textarea name="caption">{{ c.title or '' }}{% if c.creator %}
+
+Credit: {{ c.creator }}{% endif %}</textarea>
+      <div class="row"><div><label>Schedule</label><input type="datetime-local" name="scheduled_at"></div>
+      <div style="flex:0 0 auto"><button class="good">Approve</button></div></div>
+    </form>
+    <form method="post" action="/clips/{{ c.id }}/reject"><div class="row"><div><input name="notes" placeholder="why? (helps tuning)"></div>
+      <div style="flex:0 0 auto"><button class="bad">Reject</button></div></div></form>
+    {% elif c.status in ('rejected','approved') %}
+    <form method="post" action="/clips/{{ c.id }}/restore"><button>Move back to review</button></form>
+    {% endif %}
+  </div>
+</div>
+{% else %}<div class="panel muted">No clips here.</div>{% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% block content %}
+<h1>Publishing</h1>
+<p class="muted">Export copies the video and a caption file to <code>storage/outbox/&lt;account&gt;/</code> for upload. After posting, paste the link and record stats so analytics can show what works.</p>
+<div class="panel"><table><tr><th></th><th>Clip</th><th>Account</th><th>Scheduled</th><th>Status</th><th>Actions</th></tr>
+{% for r in rows %}<tr>
+<td>{% if r.thumb_path %}<img class="thumb" src="{{ r.thumb_path|media }}">{% endif %}</td>
+<td><div>{{ r.title }}</div><div class="small muted">{{ (r.caption or '')[:120] }}</div>
+  {% if r.post_url %}<a class="small" href="{{ r.post_url }}" target="_blank" rel="noopener">{{ r.post_url[:60] }}</a>{% endif %}</td>
+<td>{{ r.account }} <span class="muted small">{{ r.platform }}</span></td>
+<td class="small">{{ (r.scheduled_at or 'asap').replace('T',' ') }}</td>
+<td><span class="pill {{ r.status }}">{{ r.status }}</span>{% if r.views is not none %}<div class="small">{{ "{:,}".format(r.views) }} views</div>{% endif %}</td>
+<td>
+  {% if r.status == 'pending' %}<form class="inline" method="post" action="/publish/{{ r.id }}/export"><button class="primary">Export</button></form>{% endif %}
+  {% if r.status in ('pending','exported') %}
+  <form method="post" action="/publish/{{ r.id }}/posted" style="margin-top:6px"><div class="row"><div><input name="post_url" placeholder="post URL"></div><div style="flex:0 0 auto"><button class="good">Posted</button></div></div></form>
+  <form class="inline" method="post" action="/publish/{{ r.id }}/cancel"><button class="bad">Cancel</button></form>
+  {% endif %}
+  {% if r.status == 'posted' %}<details><summary>Record stats</summary>
+  <form method="post" action="/publish/{{ r.id }}/stats"><div class="row">
+    <div><label>Views</label><input name="views" type="number"></div><div><label>Likes</label><input name="likes" type="number"></div>
+    <div><label>Comments</label><input name="comments" type="number"></div><div><label>Shares</label><input name="shares" type="number"></div></div>
+    <div class="row"><div><label>Avg % viewed</label><input name="avg_view_pct" type="number" step="0.1"></div>
+    <div><label>Followers gained</label><input name="followers_gained" type="number"></div>
+    <div><label>Revenue $</label><input name="revenue" type="number" step="0.01"></div><div style="flex:0 0 auto"><button>Save</button></div></div>
+  </form></details>{% endif %}
+</td></tr>{% else %}<tr><td colspan="6" class="muted">Approve clips on the Review page to fill this queue.</td></tr>{% endfor %}</table></div>
+{% endblock %}

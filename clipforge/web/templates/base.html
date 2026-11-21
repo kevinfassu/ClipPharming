@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ClipForge</title><link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<header>
+  <div class="brand">Clip<span>Forge</span></div>
+  {% set p = request.url.path %}
+  <nav>
+    <a href="/" class="{{ 'on' if p == '/' }}">Overview</a>
+    <a href="/review" class="{{ 'on' if p.startswith('/review') }}">Review{% if counts.review %}<span class="badge">{{ counts.review }}</span>{% endif %}</a>
+    <a href="/sources" class="{{ 'on' if p.startswith('/sources') }}">Sources</a>
+    <a href="/creators" class="{{ 'on' if p.startswith('/creators') }}">Creators &amp; permissions</a>
+    <a href="/accounts" class="{{ 'on' if p.startswith('/accounts') }}">My accounts</a>
+    <a href="/publish" class="{{ 'on' if p.startswith('/publish') }}">Publishing{% if counts.publish %}<span class="badge">{{ counts.publish }}</span>{% endif %}</a>
+    <a href="/analytics" class="{{ 'on' if p.startswith('/analytics') }}">Analytics</a>
+    <a href="/jobs" class="{{ 'on' if p.startswith('/jobs') }}">Queue{% if counts.jobs %}<span class="badge">{{ counts.jobs }}</span>{% endif %}</a>
+  </nav>
+</header>
+<main>
+{% if msg %}<div class="flash ok">{{ msg }}</div>{% endif %}
+{% if err %}<div class="flash err">{{ err }}</div>{% endif %}
+{% block content %}{% endblock %}
+<p class="muted small" style="margin-top:40px">ClipForge v{{ version }} &middot; runs entirely on this computer</p>
+</main>
+</body></html>

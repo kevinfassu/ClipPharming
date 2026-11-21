@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<h1>Processing queue</h1>
+<form method="post" action="/jobs/discover" style="margin-bottom:12px"><button>Check creators for new VODs now</button></form>
+<div class="panel"><table><tr><th>#</th><th>Type</th><th>Status</th><th>Target</th><th>Tries</th><th>Created</th><th>Finished</th><th>Error</th></tr>
+{% for j in jobs %}<tr><td>{{ j.id }}</td><td>{{ j.type }}</td><td><span class="pill {{ j.status }}">{{ j.status }}</span></td>
+<td class="small">{% if j.source_id %}source {{ j.source_id }}{% endif %}{% if j.candidate_id %} clip {{ j.candidate_id }}{% endif %}</td>
+<td>{{ j.attempts }}</td><td class="small">{{ j.created_at[:19].replace('T',' ') }}</td><td class="small">{{ (j.finished_at or '')[:19].replace('T',' ') }}</td>
+<td class="small err">{{ (j.error or '')[:240] }}</td></tr>{% else %}<tr><td colspan="8" class="muted">Queue empty.</td></tr>{% endfor %}</table></div>
+{% endblock %}
