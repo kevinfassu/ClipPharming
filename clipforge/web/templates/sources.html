@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block content %}
+<h1>Sources</h1>
+<div class="panel">
+<form method="post" action="/sources">
+  <div class="row">
+    <div style="flex:3"><label>VOD URL (Twitch / YouTube / Kick) or a local file path</label>
+      <input name="url" required placeholder="https://www.twitch.tv/videos/... or C:\Recordings\stream.mp4" style="width:100%"></div>
+    <div><label>Creator (permission on file)</label>
+      <select name="creator_id"><option value="">-</option>
+      {% for c in creators %}<option value="{{ c.id }}" {% if c.id not in allowed %}disabled{% endif %}>{{ c.name }}{% if c.id not in allowed %} (no permission){% endif %}</option>{% endfor %}
+      </select></div>
+    <div><label>Niche</label><select name="niche"><option value="">creator default</option>
+      {% for k, n in niches.items() %}<option value="{{ k }}">{{ n.name }}</option>{% endfor %}</select></div>
+    <div style="flex:0 0 auto"><label><input type="checkbox" name="own_content" value="1"> My own content</label></div>
+    <div style="flex:0 0 auto"><button class="primary">Queue</button></div>
+  </div>
+  <p class="small muted">Only creators with an active permission record can be selected. Long VODs (10h+) are fine - they're processed one at a time.</p>
+</form>
+</div>
+<div class="panel">{% include "_sources_table.html" %}</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<h1>Analytics</h1>
+<p class="muted">Based on the stats you record on the Publishing page (latest entry per post).</p>
+<h2>By account</h2><div class="panel"><table><tr><th>Account</th><th>Platform</th><th>Niche</th><th>Posts</th><th>Views</th><th>Avg % viewed</th><th>Followers</th><th>Revenue</th></tr>
+{% for r in a.by_account %}<tr><td>{{ r.name }}</td><td>{{ r.platform }}</td><td>{{ r.niche }}</td><td>{{ r.posts }}</td><td>{{ "{:,}".format(r.views) }}</td><td>{{ r.avg_view_pct or '' }}</td><td>{{ r.followers }}</td><td>${{ r.revenue }}</td></tr>
+{% else %}<tr><td colspan="8" class="muted">No accounts yet.</td></tr>{% endfor %}</table></div>
+<h2>What length works</h2><div class="panel"><table><tr><th>Niche</th><th>Length</th><th>Posts</th><th>Avg views</th><th>Avg % viewed</th></tr>
+{% for r in a.by_length %}<tr><td>{{ r.niche }}</td><td>{{ r.bucket }}</td><td>{{ r.posts }}</td><td>{{ r.avg_views }}</td><td>{{ r.avg_view_pct or '' }}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">Record stats on posted clips to see this.</td></tr>{% endfor %}</table></div>
+<h2>Best sources</h2><div class="panel"><table><tr><th>Creator</th><th>Posts</th><th>Avg views</th></tr>
+{% for r in a.by_creator %}<tr><td>{{ r.creator }}</td><td>{{ r.posts }}</td><td>{{ r.avg_views }}</td></tr>
+{% else %}<tr><td colspan="3" class="muted">No data yet.</td></tr>{% endfor %}</table></div>
+{% endblock %}

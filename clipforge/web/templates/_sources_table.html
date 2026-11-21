@@ -1,0 +1,12 @@
+<table><tr><th>#</th><th>Source</th><th>Creator</th><th>Niche</th><th>Length</th><th>Status</th><th></th></tr>
+{% for s in sources %}<tr>
+<td>{{ s.id }}</td>
+<td><div>{{ s.title or s.url }}</div><div class="small muted">{{ s.url[:90] }}</div></td>
+<td>{{ s.creator or ('Own content' if s.own_content else '') }}</td>
+<td>{{ s.niche }}</td><td>{{ s.duration|hms }}</td>
+<td><span class="pill {{ s.status }}">{{ s.status }}</span> <span class="small muted">{{ s.stage or '' }}</span>
+{% if s.status == 'processing' and s.progress is not none %}<div class="progress"><i style="width:{{ (s.progress*100)|round }}%"></i></div>{% endif %}
+{% if s.error %}<div class="small err">{{ s.error[:200] }}</div>{% endif %}</td>
+<td>{% if s.n_clips %}<a href="/review?source={{ s.id }}">{{ s.n_clips }} clips</a>{% endif %}
+{% if s.status == 'failed' %}<form class="inline" method="post" action="/sources/{{ s.id }}/retry"><button>Retry</button></form>{% endif %}</td>
+</tr>{% else %}<tr><td colspan="7" class="muted">Nothing yet - add a VOD on the Sources page.</td></tr>{% endfor %}</table>

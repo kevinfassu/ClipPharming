@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block content %}
+<h1>My accounts</h1>
+<div class="panel"><form method="post" action="/accounts"><div class="row">
+  <div><label>Account name</label><input name="name" required placeholder="e.g. Clutch Clips"></div>
+  <div><label>Platform</label><select name="platform">{% for p in platforms %}<option>{{ p }}</option>{% endfor %}</select></div>
+  <div><label>Handle</label><input name="handle" placeholder="@handle"></div>
+  <div><label>Niche</label><select name="niche">{% for k, n in niches.items() %}<option value="{{ k }}">{{ n.name }}</option>{% endfor %}</select></div>
+  <div style="flex:0 0 auto"><button class="primary">Add account</button></div>
+</div></form></div>
+<div class="panel"><table><tr><th>Name</th><th>Platform</th><th>Handle</th><th>Niche</th></tr>
+{% for a in accounts %}<tr><td>{{ a.name }}</td><td>{{ a.platform }}</td><td>{{ a.handle or '' }}</td><td>{{ a.niche }}</td></tr>
+{% else %}<tr><td colspan="4" class="muted">Add the accounts you'll post to (one niche each works best).</td></tr>{% endfor %}</table></div>
+{% endblock %}

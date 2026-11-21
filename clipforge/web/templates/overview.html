@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% block content %}
+<h1>Overview</h1>
+<div class="grid g5">
+  <div class="stat"><small>Sources processed</small><b>{{ stats.sources }}</b></div>
+  <div class="stat"><small>Clips generated</small><b>{{ stats.clips }}</b></div>
+  <div class="stat"><small>Waiting for review</small><b>{{ counts.review }}</b></div>
+  <div class="stat"><small>Posted</small><b>{{ stats.posted }}</b></div>
+  <div class="stat"><small>Tracked views</small><b>{{ "{:,}".format(stats.views or 0) }}</b></div>
+</div>
+{% if not worker_seen %}
+<div class="panel" style="margin-top:16px"><b>Worker hasn't run yet.</b> Start it in a second terminal:
+<code>python -m clipforge worker</code> (or use <code>scripts\start-clipforge.ps1</code>, which starts both).</div>
+{% endif %}
+<h2>Recent sources</h2>
+<div class="panel">{% include "_sources_table.html" %}</div>
+<h2>Recent jobs</h2>
+<div class="panel"><table><tr><th>#</th><th>Type</th><th>Status</th><th>Target</th><th>Error</th></tr>
+{% for j in jobs %}<tr><td>{{ j.id }}</td><td>{{ j.type }}</td><td><span class="pill {{ j.status }}">{{ j.status }}</span></td>
+<td class="small">{% if j.source_id %}source {{ j.source_id }}{% endif %}{% if j.candidate_id %} clip {{ j.candidate_id }}{% endif %}</td>
+<td class="small err">{{ (j.error or '')[:160] }}</td></tr>{% endfor %}</table></div>
+{% endblock %}
