@@ -73,9 +73,17 @@ def add_account(conn: sqlite3.Connection, *, name: str, platform: str, niche: st
 def submit_source(conn: sqlite3.Connection, cfg: Config, url: str, *, creator_id: int | None = None,
                   own_content: bool = False, niche: str | None = None, priority: int = 0,
                   title: str | None = None, external_id: str | None = None) -> int:
-    url = url.strip()
+    url = url.strip().strip('"').strip("'")
     if not url:
         raise ValueError("URL or file path required")
+    from clipforge.pipeline.download import check_local, is_local, local_path
+
+    try:
+        check_local(url)
+    except FileNotFoundError as exc:
+        raise ValueError(str(exc)) from None
+    if is_local(url):
+        url = str(local_path(url))
     creator = db.one(conn, "SELECT * FROM creators WHERE id = ?", creator_id) if creator_id else None
     if creator_id and not creator:
         raise ValueError(f"Creator {creator_id} not found")

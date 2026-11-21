@@ -120,3 +120,19 @@ def test_claude_handoff_roundtrip(cfg, conn, vod):
     assert top["title"] == "Best one" and top["llm_score"] == 0.9
     if len(cands) > 1:
         assert db.one(conn, "SELECT status FROM candidates WHERE id=?", cands[-1]["id"])["status"] == "rejected"
+
+
+def test_missing_local_file_gives_clear_error(cfg, conn):
+    from clipforge.pipeline.download import looks_like_path
+
+    assert looks_like_path(r"C:\Users\YOU\Videos\test.mp4")
+    assert looks_like_path("/home/me/v.mp4") and looks_like_path("file:///tmp/v.mp4")
+    assert not looks_like_path("https://www.twitch.tv/videos/123")
+    with pytest.raises(ValueError, match="Video file not found"):
+        services.submit_source(conn, cfg, r"C:\Users\YOU\Videos\test.mp4", own_content=True)
+    assert db.one(conn, "SELECT COUNT(*) n FROM sources")["n"] == 0
+
+
+def test_quoted_local_path_accepted(cfg, conn, vod):
+    sid = services.submit_source(conn, cfg, f'"{vod}"', own_content=True)
+    assert db.one(conn, "SELECT url FROM sources WHERE id=?", sid)["url"] == str(vod)

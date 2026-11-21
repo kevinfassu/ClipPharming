@@ -1,21 +1,41 @@
 """Source ingestion with yt-dlp (or a local file)."""
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 from typing import Any, Callable
 
 
+_URL_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://")
+
+
+def looks_like_path(url: str) -> bool:
+    """True for C:\\..., /home/..., relative paths and file:// - anything that isn't a web URL."""
+    url = url.strip().strip('"').strip("'")
+    return url.startswith("file://") or not _URL_RE.match(url)
+
+
 def is_local(url: str) -> bool:
-    if url.startswith("file://"):
-        return True
+    if not looks_like_path(url):
+        return False
     try:
-        return Path(url).expanduser().exists()
+        return local_path(url).exists()
     except OSError:
         return False
 
 
+def check_local(url: str) -> None:
+    """Raise a clear error for a local path that doesn't exist (instead of passing it to yt-dlp)."""
+    if looks_like_path(url) and not is_local(url):
+        raise FileNotFoundError(
+            f"Video file not found: {url}\n"
+            "Check the path. Tip: in File Explorer, Shift + right-click the video and choose "
+            "'Copy as path', then paste it inside the quotes.")
+
+
 def local_path(url: str) -> Path:
+    url = url.strip().strip('"').strip("'")
     return Path(url[7:] if url.startswith("file://") else url).expanduser().resolve()
 
 
@@ -23,6 +43,7 @@ def download(url: str, out_dir: Path, *, max_height: int = 1080, cookies_from_br
              progress: Callable[[float], None] | None = None) -> dict[str, Any]:
     """Download a VOD. Returns {path, title, duration, id}. Local files are used in place."""
     out_dir.mkdir(parents=True, exist_ok=True)
+    check_local(url)
     if is_local(url):
         src = local_path(url)
         return {"path": str(src), "title": src.stem, "duration": None, "id": f"local:{src}"}

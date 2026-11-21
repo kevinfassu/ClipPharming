@@ -253,7 +253,8 @@ def run_job(conn: sqlite3.Connection, cfg: Config, job: sqlite3.Row) -> None:
 
 def _fail(conn: sqlite3.Connection, cfg: Config, job: sqlite3.Row, exc: BaseException) -> None:
     msg = f"{type(exc).__name__}: {exc}"
-    retry = job["attempts"] < int(cfg["worker"]["max_attempts"]) and not isinstance(exc, services.PermissionDenied)
+    retry = job["attempts"] < int(cfg["worker"]["max_attempts"]) and not isinstance(
+        exc, (services.PermissionDenied, FileNotFoundError))
     with db.tx(conn):
         db.update(conn, "jobs", job["id"], status="queued" if retry else "failed", error=msg,
                   finished_at=None if retry else db.now())
